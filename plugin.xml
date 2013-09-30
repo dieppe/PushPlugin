@@ -13,7 +13,9 @@
 
 	<license>MIT</license>
 
-	<asset src="www/PushNotification.js" target="PushNotification.js" />
+	<js-module src="www/PushNotification.js" name="PushNotification">
+		<clobbers target="window.pushNotification" />
+	</js-module>
 
 	<engines>
 		<engine name="cordova" version=">=3.0.0" />
@@ -21,7 +23,6 @@
 	
 	<!-- android -->
 	<platform name="android">
-
 		<config-file target="res/xml/config.xml" parent="/*">
 			<feature name="PushPlugin" >
 				<param name="android-package" value="com.plugin.gcm.PushPlugin"/>
@@ -55,7 +56,6 @@
 		<source-file src="src/android/com/plugin/gcm/PushHandlerActivity.java" target-dir="src/com/plugin/gcm/" />
 		<source-file src="src/android/com/plugin/gcm/PushPlugin.java" target-dir="src/com/plugin/gcm/" />
 		<source-file src="src/android/com/plugin/android-support-v13.jar" target-dir="libs/" />
-		
 	</platform>
 
 	<!-- ios -->
