@@ -22,7 +22,7 @@ import com.google.android.gcm.*;
 
 public class PushPlugin extends CordovaPlugin {
 	public static final String TAG = "PushPlugin";
-	
+
 	public static final String REGISTER = "register";
 	public static final String UNREGISTER = "unregister";
 	public static final String EXIT = "exit";
@@ -31,6 +31,7 @@ public class PushPlugin extends CordovaPlugin {
 	private static String gECB;
 	private static String gSenderID;
 	private static Bundle gCachedExtras = null;
+	private static boolean isRunning = false;
 
 	/**
 	 * Gets the application context from cordova's main activity.
@@ -51,9 +52,11 @@ public class PushPlugin extends CordovaPlugin {
 
 			Log.v(TAG, "execute: data=" + data.toString());
 
+			isRunning = true;
+
 			try {
 				JSONObject jo = data.getJSONObject(0);
-				
+
 				gWebView = this.webView;
 				Log.v(TAG, "execute: jo=" + jo.toString());
 
@@ -74,7 +77,7 @@ public class PushPlugin extends CordovaPlugin {
 				sendExtras(gCachedExtras);
 				gCachedExtras = null;
 			}
-			
+
 		} else if (UNREGISTER.equals(action)) {
 
 			GCMRegistrar.unregister(getApplicationContext());
@@ -97,7 +100,7 @@ public class PushPlugin extends CordovaPlugin {
 		Log.v(TAG, "sendJavascript: " + _d);
 
 		if (gECB != null && gWebView != null) {
-			gWebView.sendJavascript(_d); 
+			gWebView.sendJavascript(_d);
 		}
 	}
 
@@ -116,24 +119,24 @@ public class PushPlugin extends CordovaPlugin {
 			}
 		}
 	}
-	
+
 	/*
 	 * serializes a bundle to JSON.
 	 */
-    private static JSONObject convertBundleToJson(Bundle extras)
-    {
+	private static JSONObject convertBundleToJson(Bundle extras)
+	{
 		try
 		{
 			JSONObject json;
 			json = new JSONObject().put("event", "message");
-        
+
 			JSONObject jsondata = new JSONObject();
 			Iterator<String> it = extras.keySet().iterator();
 			while (it.hasNext())
 			{
 				String key = it.next();
-				Object value = extras.get(key);	
-        	
+				Object value = extras.get(key);
+
 				// System data from Android
 				if (key.equals("from") || key.equals("collapse_key"))
 				{
@@ -154,10 +157,10 @@ public class PushPlugin extends CordovaPlugin {
 					{
 						json.put(key, value);
 					}
-        		
+
 					if ( value instanceof String ) {
 					// Try to figure out if the value is another JSON object
-						
+
 						String strValue = (String)value;
 						if (strValue.startsWith("{")) {
 							try {
@@ -189,7 +192,7 @@ public class PushPlugin extends CordovaPlugin {
 				}
 			} // while
 			json.put("payload", jsondata);
-        
+
 			Log.v(TAG, "extrasToJSON: " + json.toString());
 
 			return json;
@@ -197,20 +200,41 @@ public class PushPlugin extends CordovaPlugin {
 		catch( JSONException e)
 		{
 			Log.e(TAG, "extrasToJSON: JSON exception");
-		}        	
-		return null;      	
-    }
-    
-    public static boolean isActive()
-    {
-    	return gWebView != null;
-    }
-    
-	public void onDestroy() 
+		}
+		return null;
+	}
+
+	public static boolean isActive()
 	{
+		return gWebView != null;
+	}
+
+	public static boolean isRunning() {
+		return isRunning;
+	}
+
+	@Override
+	public void onPause(boolean multitasking) {
+		Log.d(TAG, "onPause");
+		isRunning = false;
+		super.onPause(multitasking);
+	}
+
+	@Override
+	public void onResume(boolean multitasking) {
+		Log.d(TAG, "onResume");
+		isRunning = true;
+		super.onResume(multitasking);
+	}
+
+	@Override
+	public void onDestroy()
+	{
+		Log.d(TAG, "onDestroy");
 		GCMRegistrar.onDestroy(getApplicationContext());
 		gWebView = null;
 		gECB = null;
+		isRunning = false;
 		super.onDestroy();
 	}
 }
